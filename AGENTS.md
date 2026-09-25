@@ -1,28 +1,9 @@
-# HSBooking agent context
+<!-- BEGIN:nextjs-agent-rules -->
 
-## Product
+# This is NOT the Next.js you know
 
-HSBooking is a reusable homestay website platform for independent Malaysian homestay owners. It provides a standard public-site framework whose content, branding, amenities, policies, availability, and booking settings can be configured per owner. It is not a unified marketplace in the initial scope.
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 
-## Stack
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
-- Next.js App Router
-- TypeScript
-- Supabase for authentication, structured content, availability, and bookings
-- npm for package management
-
-## Commands
-
-- `npm run dev` — local development server
-- `npm run build` — production build
-- `npm run lint` — ESLint
-- `npm test` — test suite when added
-
-## Rules
-
-- Keep owner-configurable content data-driven; do not hard-code one homestay's identity into reusable components.
-- Keep tenant/owner boundaries explicit in database queries and server actions.
-- Never expose Supabase service-role credentials to the browser.
-- Add tests for booking availability, owner isolation, and content fallbacks.
-- Use existing design tokens before adding new styles.
-- Keep changes narrow and verify build, lint, and tests before committing.
+<!-- END:nextjs-agent-rules -->
