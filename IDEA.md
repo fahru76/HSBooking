@@ -1,0 +1,1 @@
+A modern stylish and popular frontend look webpage for a Homestay in Malaysia featuring amenities and facilities avalaible that supports and online booking payment, that may include rating and comments.
