@@ -67,12 +67,21 @@ export interface StayAttempt {
 /** Returns a list of human-readable booking-rule violations (empty = valid). */
 export function validateStay(attempt: StayAttempt): string[] {
   const errors: string[] = [];
-  const nights = countNights({ start: attempt.checkIn, end: attempt.checkOut });
 
-  if (nights < 1) errors.push("check-out must be after check-in");
+  const inParsed = parseDate(attempt.checkIn);
+  const outParsed = parseDate(attempt.checkOut);
 
-  if (attempt.minNights !== undefined && nights < attempt.minNights) {
-    errors.push(`minimum stay is ${attempt.minNights} night(s)`);
+  if (!inParsed || !outParsed) {
+    // Reject empty / non-YYYY-MM-DD / impossible dates instead of letting
+    // countNights produce NaN, which made every numeric guard silently pass.
+    errors.push("check-in and check-out are required");
+  } else {
+    const nights = countNights({ start: attempt.checkIn, end: attempt.checkOut });
+    if (nights < 1) errors.push("check-out must be after check-in");
+
+    if (attempt.minNights !== undefined && nights < attempt.minNights) {
+      errors.push(`minimum stay is ${attempt.minNights} night(s)`);
+    }
   }
 
   if (attempt.guests > attempt.roomCapacity) {
@@ -84,6 +93,13 @@ export function validateStay(attempt: StayAttempt): string[] {
   }
 
   return errors;
+}
+
+/** Strict YYYY-MM-DD → Date, or null when impossible. Dates are always UTC. */
+function parseDate(value: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const d = new Date(`${value}T00:00:00Z`);
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
 export function countNights({ start, end }: DateRange): number {

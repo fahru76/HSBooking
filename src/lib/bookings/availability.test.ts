@@ -108,3 +108,32 @@ describe("validateStay", () => {
     ).toContain("maximum 5 guest(s) per booking");
   });
 });
+
+describe("validateStay date guards (NaN regression)", () => {
+  it("rejects empty dates with a required error instead of passing via NaN", () => {
+    const errors = validateStay({ checkIn: "", checkOut: "", guests: 2, roomCapacity: 4 });
+    expect(errors).toContain("check-in and check-out are required");
+  });
+
+  it("rejects malformed non-ISO dates", () => {
+    const errors = validateStay({ checkIn: "11-01-2026", checkOut: "2026-11-04", guests: 1, roomCapacity: 2 });
+    expect(errors).toContain("check-in and check-out are required");
+  });
+
+  it("rejects impossible calendar dates", () => {
+    const errors = validateStay({ checkIn: "2026-13-99", checkOut: "2026-11-04", guests: 1, roomCapacity: 2 });
+    expect(errors).toContain("check-in and check-out are required");
+  });
+
+  it("reports both reversed-date and min-nights errors together", () => {
+    const errors = validateStay({
+      checkIn: "2026-12-05",
+      checkOut: "2026-12-01",
+      guests: 2,
+      roomCapacity: 4,
+      minNights: 2,
+    });
+    expect(errors).toContain("check-out must be after check-in");
+    expect(errors).toContain("minimum stay is 2 night(s)");
+  });
+});
