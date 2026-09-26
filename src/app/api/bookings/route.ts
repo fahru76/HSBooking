@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createBooking } from "@/lib/db/create-booking";
+import { getClientIp, rateLimit } from "@/lib/rate-limit";
 
 /**
  * Public booking request intake.
@@ -25,6 +26,10 @@ interface BookingRequest {
   guestPhone?: string;
 }
 
+const MAX_NAME = 200;
+const MAX_EMAIL = 320;
+const MAX_PHONE = 30;
+
 function isIsoDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(`${value}T00:00:00Z`);
@@ -32,6 +37,15 @@ function isIsoDate(value: string): boolean {
 }
 
 export async function POST(request: Request) {
+  // Rate-limit: 5 booking attempts per minute per client IP.
+  const ip = getClientIp(request);
+  if (!rateLimit(ip)) {
+    return NextResponse.json(
+      { error: "too-many-requests" },
+      { status: 429, headers: { "Retry-After": "60" } },
+    );
+  }
+
   let body: BookingRequest;
   try {
     body = (await request.json()) as BookingRequest;
@@ -57,6 +71,15 @@ export async function POST(request: Request) {
     !isIsoDate(body.checkOut)
   ) {
     return NextResponse.json({ error: "invalid-payload" }, { status: 400 });
+  }
+
+  // Field length bounds — prevent oversized strings reaching the DB.
+  if (
+    body.guestName.length > MAX_NAME ||
+    (body.guestEmail && body.guestEmail.length > MAX_EMAIL) ||
+    (body.guestPhone && body.guestPhone.length > MAX_PHONE)
+  ) {
+    return NextResponse.json({ error: "field-too-long" }, { status: 400 });
   }
 
   // If the Supabase env isn't configured, respond honestly — no fake success.

@@ -2,8 +2,11 @@
 --
 -- Guests create a pending booking through this guarded RPC; the public route
 -- handler calls it with the service-role key (server-side only). The function
--- re-checks availability before inserting to prevent double-booking under
--- concurrent requests (atomic guard inside the same transaction).
+-- re-checks availability before inserting. A database-level exclusion
+-- constraint (see 20260926000002_no_double_booking.sql) is the final
+-- race-condition guard: if two concurrent requests pass the check-then-insert
+-- window, Postgres rejects whichever commits second with a 23P01 exclusion
+-- violation, which we translate to the 'unavailable' error code below.
 
 create or replace function public.create_booking(
   p_owner_id    uuid,
@@ -33,7 +36,8 @@ begin
     raise exception 'invalid-params';
   end if;
 
-  -- Re-check availability atomically (prevents race-condition double-booking).
+  -- Re-check availability (catches the common case before hitting the
+  -- exclusion constraint; the constraint is the backstop for races).
   v_available := public.check_availability(
     p_owner_id, p_room_id, p_check_in, p_check_out
   );
@@ -52,6 +56,14 @@ begin
   returning id into v_id;
 
   return v_id;
+
+exception
+  -- The exclusion constraint (bookings_no_double_booking) raises 23P01
+  -- when a concurrent transaction committed an overlapping active stay
+  -- between our check and our insert. Translate it to the same error code
+  -- the route handler already maps to HTTP 409.
+  when exclusion_violation then
+    raise exception 'unavailable';
 end;
 $$;
 

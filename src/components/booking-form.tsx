@@ -9,9 +9,8 @@ import { validateStay } from "@/lib/bookings/availability";
  * stay against booking rules and gather the details the owner needs.
  *
  * Submit path: the form POSTs the validated request to the (server-side)
- * booking intake handler. The demo form pre-fills the guest name so an
- * end-to-end click through is still possible without typing; the response is
- * shown in place (no fake persistence — the demo marker is explicit).
+ * booking intake handler. The response is shown in place with a booking
+ * reference number (no fake persistence).
  */
 
 interface SubmitState {
@@ -20,18 +19,23 @@ interface SubmitState {
 }
 
 export function BookingForm({ config }: { config: SiteConfig }) {
-  const room = config.rooms[0] ?? null;
+  const rooms = config.rooms;
+  const [selectedRoomId, setSelectedRoomId] = useState(rooms[0]?.id ?? "");
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState(1);
   const [guestName, setGuestName] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
   const [submitState, setSubmitState] = useState<SubmitState>({
     status: "idle",
     message: "",
   });
 
-  if (!room) return null;
+  if (rooms.length === 0) return null;
+
+  const room = rooms.find((r) => r.id === selectedRoomId) ?? rooms[0];
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -49,7 +53,7 @@ export function BookingForm({ config }: { config: SiteConfig }) {
       return;
     }
 
-    setSubmitState({ status: "sending", message: "Checking availability…" });
+    setSubmitState({ status: "sending", message: "Checking availability\u2026" });
     try {
       const res = await fetch("/api/bookings", {
         method: "POST",
@@ -61,13 +65,22 @@ export function BookingForm({ config }: { config: SiteConfig }) {
           checkOut,
           guests,
           guestName: guestName.trim() || "Demo guest",
+          guestEmail: guestEmail.trim() || undefined,
+          guestPhone: guestPhone.trim() || undefined,
         }),
       });
-      const data = (await res.json()) as { message?: string; error?: string };
+      const data = (await res.json()) as {
+        message?: string;
+        error?: string;
+        bookingId?: string;
+      };
       if (res.ok) {
+        const ref = data.bookingId
+          ? " Reference: " + data.bookingId.slice(0, 8).toUpperCase()
+          : "";
         setSubmitState({
           status: "received",
-          message: data.message ?? "Request received.",
+          message: (data.message ?? "Request received.") + ref,
         });
       } else {
         setSubmitState({
@@ -78,7 +91,7 @@ export function BookingForm({ config }: { config: SiteConfig }) {
     } catch {
       setSubmitState({
         status: "error",
-        message: "Network error — please try again.",
+        message: "Network error \u2014 please try again.",
       });
     }
   }
@@ -90,7 +103,7 @@ export function BookingForm({ config }: { config: SiteConfig }) {
           Check Availability
         </h2>
         <p className="mb-8 text-sm text-muted">
-          Pick your dates — we reply within the hour.
+          Pick your dates \u2014 we reply within the hour.
         </p>
         <form
           onSubmit={handleSubmit}
@@ -101,9 +114,17 @@ export function BookingForm({ config }: { config: SiteConfig }) {
             <select
               className="w-full rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm text-foreground"
               aria-label="Room"
-              defaultValue={room.id}
+              value={selectedRoomId}
+              onChange={(e) => {
+                setSelectedRoomId(e.target.value);
+                setGuests(1);
+              }}
             >
-              <option value={room.id}>{room.name}</option>
+              {rooms.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name} \u2014 {r.baseRatePerNight} {config.booking.currency}/night
+                </option>
+              ))}
             </select>
           </label>
           <label className="block text-sm">
@@ -145,7 +166,34 @@ export function BookingForm({ config }: { config: SiteConfig }) {
               type="text"
               value={guestName}
               onChange={(e) => setGuestName(e.target.value)}
-              placeholder="Demo booking — prefilled"
+              placeholder="Enter your full name"
+              maxLength={200}
+              className="w-full rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm text-foreground"
+            />
+          </label>
+          <label className="block text-sm sm:col-span-1 lg:col-span-2">
+            <span className="mb-1 block font-medium text-foreground">
+              Email (optional)
+            </span>
+            <input
+              type="email"
+              value={guestEmail}
+              onChange={(e) => setGuestEmail(e.target.value)}
+              placeholder="you@example.com"
+              maxLength={320}
+              className="w-full rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm text-foreground"
+            />
+          </label>
+          <label className="block text-sm sm:col-span-1 lg:col-span-2">
+            <span className="mb-1 block font-medium text-foreground">
+              Phone (optional)
+            </span>
+            <input
+              type="tel"
+              value={guestPhone}
+              onChange={(e) => setGuestPhone(e.target.value)}
+              placeholder="+60 12-345 6789"
+              maxLength={30}
               className="w-full rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm text-foreground"
             />
           </label>
@@ -156,7 +204,7 @@ export function BookingForm({ config }: { config: SiteConfig }) {
               className="rounded-full bg-foreground px-7 py-3 text-sm font-medium text-background transition-colors hover:bg-gold disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitState.status === "sending"
-                ? "Checking…"
+                ? "Checking\u2026"
                 : "Check availability"}
             </button>
           </div>
