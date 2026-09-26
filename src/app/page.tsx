@@ -4,27 +4,28 @@ import { SiteAmenities } from "@/components/site-amenities";
 import { SiteRooms } from "@/components/site-rooms";
 import { SitePolicies } from "@/components/site-policies";
 import { BookingForm } from "@/components/booking-form";
-import { DEMO_SITE_CONFIG } from "@/lib/config/demo-config";
+import { getPublicSiteConfig } from "@/lib/db/public-config";
 
 /**
  * Public homestay page. Renders ONLY what the owner config provides, with
  * platform defaults when a field is missing. Owner strings render as plain
  * React children (auto-escaped); no raw HTML is ever injected from config.
  *
- * The config source is DEMO_SITE_CONFIG until the Supabase slice replaces it
- * with a per-owner row read (loadSiteConfig).
+ * Config is loaded from the owner's Supabase row (demo owner for now).
  */
-export default function Home() {
-  const config = DEMO_SITE_CONFIG;
+export default async function Home() {
+  const config = await getPublicSiteConfig();
 
   return (
-    <div className="min-h-screen bg-zinc-50 font-sans text-zinc-900 antialiased">
+    <div className="min-h-screen bg-background font-sans text-foreground antialiased">
       <SiteHeader config={config} />
       <SiteHero config={config} />
       <main>
         {config.description ? (
-          <section className="mx-auto max-w-5xl px-4 py-12">
-            <p className="text-base leading-7 text-zinc-700">{config.description}</p>
+          <section className="mx-auto max-w-6xl px-5 py-16">
+            <p className="mx-auto max-w-3xl text-center font-display text-xl leading-9 text-muted sm:text-2xl sm:leading-10">
+              {config.description}
+            </p>
           </section>
         ) : null}
         <SiteRooms config={config} />
@@ -32,8 +33,8 @@ export default function Home() {
         <SitePolicies config={config} />
         <BookingForm config={config} />
       </main>
-      <footer className="border-t border-zinc-200 bg-white py-6">
-        <div className="mx-auto max-w-5xl px-4 text-center text-sm text-zinc-500">
+      <footer className="border-t border-line py-10">
+        <div className="mx-auto max-w-6xl px-5 text-center text-sm text-muted">
           {config.siteName} · {config.location.city}, {config.location.state}
         </div>
       </footer>
