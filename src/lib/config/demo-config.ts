@@ -14,7 +14,7 @@ export const DEMO_SITE_CONFIG: SiteConfig = {
   description:
     "A family-friendly homestay surrounded by rolling tea plantations and cool mountain air. Fully furnished, halal-friendly kitchen, and free parking.",
   owner: {
-    id: "demo-owner-casa-melati",
+    id: "00000000-0000-0000-0000-000000000000",
     name: "Aina Rahman",
     phone: "+60 12-345 6789",
     email: "stay@casamelati.my",
