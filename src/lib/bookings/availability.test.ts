@@ -57,7 +57,7 @@ describe("isRangeAvailable", () => {
     ).toBe(false);
   });
 
-  it("rejects touching check-in on the existing check-out day", () => {
+  it("allows check-in on the existing check-out day (end-exclusive)", () => {
     // Existing stays through 10-08 morning; a new guest checking in 10-08 is fine.
     expect(
       isRangeAvailable({ start: "2026-10-08", end: "2026-10-10" }, [], bookings, "r1"),
@@ -135,5 +135,41 @@ describe("validateStay date guards (NaN regression)", () => {
     });
     expect(errors).toContain("check-out must be after check-in");
     expect(errors).toContain("minimum stay is 2 night(s)");
+  });
+});
+
+describe("validateStay blockCheckInWeekdays", () => {
+  it("rejects check-in on a blocked weekday", () => {
+    // 2026-10-04 is a Sunday (weekday 0)
+    const errors = validateStay({
+      checkIn: "2026-10-04",
+      checkOut: "2026-10-06",
+      guests: 1,
+      roomCapacity: 2,
+      blockCheckInWeekdays: [0],
+    });
+    expect(errors).toContain("check-in is not available on this weekday");
+  });
+
+  it("allows check-in on a non-blocked weekday", () => {
+    // 2026-10-05 is a Monday (weekday 1)
+    const errors = validateStay({
+      checkIn: "2026-10-05",
+      checkOut: "2026-10-07",
+      guests: 1,
+      roomCapacity: 2,
+      blockCheckInWeekdays: [0],
+    });
+    expect(errors).toEqual([]);
+  });
+
+  it("skips the weekday check when no blocked weekdays are configured", () => {
+    const errors = validateStay({
+      checkIn: "2026-10-04",
+      checkOut: "2026-10-06",
+      guests: 1,
+      roomCapacity: 2,
+    });
+    expect(errors).toEqual([]);
   });
 });

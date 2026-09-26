@@ -33,6 +33,13 @@ begin
     raise exception 'invalid-params';
   end if;
 
+  -- Serialize concurrent bookings for the same room: take a transaction-scoped
+  -- advisory lock keyed on (owner_id, room_id) so two transactions can't both
+  -- pass the availability check and insert overlapping stays.
+  perform pg_advisory_xact_lock(
+    hashtextextended(p_owner_id::text || ':' || p_room_id, 0)
+  );
+
   -- Re-check availability atomically (prevents race-condition double-booking).
   v_available := public.check_availability(
     p_owner_id, p_room_id, p_check_in, p_check_out

@@ -60,5 +60,8 @@ export function SiteHero({ config }: { config: SiteConfig }) {
 
 export function lowestRate(config: SiteConfig): number {
   if (config.rooms.length === 0) return 0;
-  return Math.min(...config.rooms.map((r) => r.baseRatePerNight));
+  const rates = config.rooms
+    .map((r) => r.baseRatePerNight)
+    .filter((n) => typeof n === "number" && n >= 0);
+  return rates.length > 0 ? Math.min(...rates) : 0;
 }

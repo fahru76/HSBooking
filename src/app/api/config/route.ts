@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getAdminClient } from "@/lib/db/admin-client";
-import { mergeSiteConfig, type SiteConfig } from "@/lib/config/site-config";
+import { mergeSiteConfig, validateSiteConfig, type SiteConfig } from "@/lib/config/site-config";
 
 /**
  * Owner config API: GET reads the current config, PUT saves a new one.
@@ -31,6 +31,8 @@ async function getOwnerId(request: Request): Promise<string | null> {
   if (error || !data.user) return null;
   return data.user.id;
 }
+
+export const runtime = "nodejs";
 
 export async function GET(request: Request) {
   const ownerId = await getOwnerId(request);
@@ -93,6 +95,14 @@ export async function PUT(request: Request) {
       { error: "invalid-payload" },
       { status: 400 },
     );
+  }
+
+  // Server-side validation: reject configs that break booking rules or
+  // display invariants before they ever touch the database.
+  const merged = mergeSiteConfig(body.config);
+  const errors = validateSiteConfig(merged);
+  if (errors.length > 0) {
+    return NextResponse.json({ error: errors.join("; ") }, { status: 400 });
   }
 
   const db = getAdminClient();

@@ -133,6 +133,16 @@ begin
                   ) as d(day)
             where d.day >= p_start::text
               and d.day <  p_end::text
+         )
+     and not exists (
+           -- Owner-blocked check-in weekdays also block availability.
+           select 1
+             from jsonb_array_elements_text(
+                    (select config #> '{booking,blockCheckInWeekdays}'
+                       from public.site_configs sc
+                      where sc.owner_id = p_owner_id)
+                  ) as w(weekday)
+            where w.weekday::int = extract(isodow from p_start)::int % 7
          );
 end;
 $$;

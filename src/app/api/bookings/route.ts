@@ -31,6 +31,8 @@ function isIsoDate(value: string): boolean {
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
+export const runtime = "nodejs";
+
 export async function POST(request: Request) {
   let body: BookingRequest;
   try {

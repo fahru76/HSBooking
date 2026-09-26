@@ -20,7 +20,8 @@ interface SubmitState {
 }
 
 export function BookingForm({ config }: { config: SiteConfig }) {
-  const room = config.rooms[0] ?? null;
+  const [selectedRoomId, setSelectedRoomId] = useState(config.rooms[0]?.id ?? "");
+  const room = config.rooms.find((r) => r.id === selectedRoomId) ?? config.rooms[0] ?? null;
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState(1);
@@ -42,6 +43,7 @@ export function BookingForm({ config }: { config: SiteConfig }) {
       minNights: config.booking.minNights,
       maxGuests: config.booking.maxGuests,
       roomCapacity: room.capacity,
+      blockCheckInWeekdays: config.booking.blockCheckInWeekdays,
     });
     setErrors(validationErrors);
     if (validationErrors.length > 0) {
@@ -101,9 +103,14 @@ export function BookingForm({ config }: { config: SiteConfig }) {
             <select
               className="w-full rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm text-foreground"
               aria-label="Room"
-              defaultValue={room.id}
+              value={selectedRoomId}
+              onChange={(e) => setSelectedRoomId(e.target.value)}
             >
-              <option value={room.id}>{room.name}</option>
+              {config.rooms.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))}
             </select>
           </label>
           <label className="block text-sm">

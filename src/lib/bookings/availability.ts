@@ -62,6 +62,7 @@ export interface StayAttempt {
   maxGuests?: number;
   guests: number;
   roomCapacity: number;
+  blockCheckInWeekdays?: number[];
 }
 
 /** Returns a list of human-readable booking-rule violations (empty = valid). */
@@ -81,6 +82,13 @@ export function validateStay(attempt: StayAttempt): string[] {
 
     if (attempt.minNights !== undefined && nights < attempt.minNights) {
       errors.push(`minimum stay is ${attempt.minNights} night(s)`);
+    }
+
+    if (attempt.blockCheckInWeekdays?.length) {
+      const weekday = inParsed.getUTCDay();
+      if (attempt.blockCheckInWeekdays.includes(weekday)) {
+        errors.push("check-in is not available on this weekday");
+      }
     }
   }
 

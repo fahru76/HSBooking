@@ -206,10 +206,5 @@ function Field({ label, value, onChange, multiline = false }: { label: string; v
 }
 
 function NumberField({ label, value, onChange }: { label: string; value: number; onChange: (value: number) => void }) {
-  return (
-    <label className="block">
-      <span className="mb-1 block text-sm font-medium">{label}</span>
-      <input type="number" min={1} value={value} onChange={(e) => onChange(Number(e.target.value))} className="control" />
-    </label>
-  );
+  return <label className="block"><span className="mb-1 block text-sm font-medium">{label}</span><input type="number" min={1} value={value} onChange={(e) => { const n = Number(e.target.value); onChange(Number.isFinite(n) && n > 0 ? n : 1); }} className="control" /></label>;
 }
