@@ -13,11 +13,12 @@ declare module "@supabase/supabase-js" {
 
   export interface SupabaseClient {
     auth: {
-      signInWithPassword: (creds: { email: string; password: string }) => Promise<{ data: unknown; error: { message: string } | null }>;
-      signUp: (creds: { email: string; password: string }) => Promise<{ data: unknown; error: { message: string } | null }>;
-      signOut: () => Promise<void>;
-      getSession: () => Promise<{ data: { session: unknown } | null }>;
-      getUser: (jwt?: string) => Promise<{ data: { user: { id: string } | null }; error: { message: string } | null }>;
+      signInWithPassword: (creds: { email: string; password: string }) => Promise<{ data: { session: unknown | null }; error: { message: string } | null }>;
+      signUp: (creds: { email: string; password: string }) => Promise<{ data: { session: unknown | null; user: { id: string; email: string } | null }; error: { message: string } | null }>;
+      signOut: () => Promise<{ error: { message: string } | null }>;
+      getSession: () => Promise<{ data: { session: { user: { id: string; email: string } | null; access_token: string } | null } }>;
+      getUser: (jwt?: string) => Promise<{ data: { user: { id: string; email: string } | null }; error: { message: string } | null }>;
+      onAuthStateChange: (cb: (event: string, session: { user: { id: string; email: string } | null } | null) => void) => { data: { subscription: { unsubscribe: () => void } } };
     };
     from: (table: string) => {
       select: (columns?: string) => { eq: (col: string, val: unknown) => { maybeSingle: () => Promise<{ data: unknown; error: { message: string } | null }> } };

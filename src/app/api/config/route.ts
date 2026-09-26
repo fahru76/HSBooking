@@ -1,33 +1,43 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { getAdminClient } from "@/lib/db/admin-client";
 import { mergeSiteConfig, type SiteConfig } from "@/lib/config/site-config";
 
 /**
  * Owner config API: GET reads the current config, PUT saves a new one.
  *
- * Auth is not wired yet; the ownerId is derived from a query param (demo
- * mode). When Supabase Auth is connected, the ownerId will come from the
- * session's auth.uid() claim instead.
+ * The owner ID is extracted from the JWT in the Authorization header.
+ * The service-role admin client is used for the DB write (bypasses RLS
+ * because the route handler is the trusted boundary), but the owner
+ * identity comes from the user's own session token — not a query param.
  */
 
-const DEMO_OWNER_ID = "00000000-0000-0000-0000-000000000000";
+/** Extract the owner UUID from the Bearer token. */
+async function getOwnerId(request: Request): Promise<string | null> {
+  const authHeader = request.headers.get("authorization");
+  if (!authHeader?.startsWith("Bearer ")) return null;
+  const token = authHeader.slice(7);
 
-function readDemoOwner(request: Request): string | null {
-  const ownerId = new URL(request.url).searchParams.get("ownerId");
-  return ownerId === DEMO_OWNER_ID ? ownerId : null;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) return null;
+
+  // Use the anon key to verify the user's token — this respects RLS
+  // and validates the JWT cryptographically.
+  const client = createClient(url, anonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { data, error } = await client.auth.getUser(token);
+  if (error || !data.user) return null;
+  return data.user.id;
 }
 
 export async function GET(request: Request) {
-  const ownerId = readDemoOwner(request);
+  const ownerId = await getOwnerId(request);
   if (!ownerId) {
-    return NextResponse.json({ error: "owner-auth-required" }, { status: 403 });
+    return NextResponse.json({ error: "auth-required" }, { status: 401 });
   }
 
-  // This demo guard is temporary. Replace with auth.uid() before production.
-  // It prevents the public endpoint from becoming an arbitrary owner write/read
-  // surface while Supabase Auth is not yet wired into the owner area.
-  
-  
   if (
     !process.env.NEXT_PUBLIC_SUPABASE_URL ||
     !process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -56,9 +66,9 @@ export async function GET(request: Request) {
 }
 
 export async function PUT(request: Request) {
-  const ownerId = readDemoOwner(request);
+  const ownerId = await getOwnerId(request);
   if (!ownerId) {
-    return NextResponse.json({ error: "owner-auth-required" }, { status: 403 });
+    return NextResponse.json({ error: "auth-required" }, { status: 401 });
   }
 
   if (
