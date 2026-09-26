@@ -14,6 +14,13 @@ import { getPublicSiteConfig } from "@/lib/db/public-config";
  * Config is loaded from the owner Supabase row (demo owner for now).
  * Includes JSON-LD structured data for search-engine rich results.
  */
+
+/** Safely serialize JSON-LD so no owner-controlled string can break out. */
+function safeJsonLd(obj: unknown): string {
+  return JSON.stringify(obj).replace(/[<>&]/g, (ch) =>
+    ch === "<" ? "\\u003c" : ch === ">" ? "\\u003e" : "\\u0026",
+  );
+}
 export default async function Home() {
   const config = await getPublicSiteConfig();
 
@@ -48,7 +55,7 @@ export default async function Home() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(lodgingLd),
+          __html: safeJsonLd(lodgingLd),
         }}
       />
       <SiteHeader config={config} />
