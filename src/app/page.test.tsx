@@ -29,6 +29,7 @@ describe("public homestay page", () => {
     const dateInputs = document.querySelectorAll('input[type="date"]');
     expect(dateInputs.length).toBeGreaterThanOrEqual(2);
     expect(document.querySelectorAll('input[type="number"]').length).toBeGreaterThanOrEqual(1);
+    expect(document.querySelectorAll('input[type="text"]').length).toBeGreaterThanOrEqual(1);
     const submit = document.querySelectorAll('button[type="submit"]');
     expect(submit.length).toBeGreaterThanOrEqual(1);
     expect(submit[0].textContent).toMatch(/Check availability/i);

@@ -5,23 +5,37 @@ import type { SiteConfig } from "@/lib/config/site-config";
 import { validateStay } from "@/lib/bookings/availability";
 
 /**
- * Guest booking form. Client-side. Validates input against booking rules
- * (capacity, nights, guest max) before allowing submission.
- * Persistence + payment arrive later; the future submit path will be a
- * server action / RPC, not a client-side write.
+ * Guest booking request form. Client-side, real responsibility: validate the
+ * stay against booking rules and gather the details the owner needs.
+ *
+ * Submit path: the form POSTs the validated request to the (server-side)
+ * booking intake handler. The demo form pre-fills the guest name so an
+ * end-to-end click through is still possible without typing; the response is
+ * shown in place (no fake persistence — the demo marker is explicit).
  */
+
+interface SubmitState {
+  status: "idle" | "sending" | "received" | "error";
+  message: string;
+}
+
 export function BookingForm({ config }: { config: SiteConfig }) {
   const room = config.rooms[0] ?? null;
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState(1);
+  const [guestName, setGuestName] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
+  const [submitState, setSubmitState] = useState<SubmitState>({
+    status: "idle",
+    message: "",
+  });
 
   if (!room) return null;
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const errors = validateStay({
+    const validationErrors = validateStay({
       checkIn,
       checkOut,
       guests,
@@ -29,10 +43,43 @@ export function BookingForm({ config }: { config: SiteConfig }) {
       maxGuests: config.booking.maxGuests,
       roomCapacity: room.capacity,
     });
-    setErrors(errors);
-    if (errors.length === 0) {
-      // TODO: submit to server action / booking RPC in a later slice.
-      window.alert("Booking request received (demo). Payment flow coming soon.");
+    setErrors(validationErrors);
+    if (validationErrors.length > 0) {
+      setSubmitState({ status: "idle", message: "" });
+      return;
+    }
+
+    setSubmitState({ status: "sending", message: "Checking availability…" });
+    try {
+      const res = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ownerId: config.owner.id,
+          roomId: room.id,
+          checkIn,
+          checkOut,
+          guests,
+          guestName: guestName.trim() || "Demo guest",
+        }),
+      });
+      const data = (await res.json()) as { message?: string; error?: string };
+      if (res.ok) {
+        setSubmitState({
+          status: "received",
+          message: data.message ?? "Request received.",
+        });
+      } else {
+        setSubmitState({
+          status: "error",
+          message: data.error ?? "Could not send your request.",
+        });
+      }
+    } catch {
+      setSubmitState({
+        status: "error",
+        message: "Network error — please try again.",
+      });
     }
   }
 
@@ -90,12 +137,27 @@ export function BookingForm({ config }: { config: SiteConfig }) {
               className="w-full rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm text-foreground"
             />
           </label>
+          <label className="block text-sm sm:col-span-2 lg:col-span-4">
+            <span className="mb-1 block font-medium text-foreground">
+              Your name
+            </span>
+            <input
+              type="text"
+              value={guestName}
+              onChange={(e) => setGuestName(e.target.value)}
+              placeholder="Demo booking — prefilled"
+              className="w-full rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm text-foreground"
+            />
+          </label>
           <div className="sm:col-span-2 lg:col-span-4">
             <button
               type="submit"
-              className="rounded-full bg-foreground px-7 py-3 text-sm font-medium text-background transition-colors hover:bg-gold"
+              disabled={submitState.status === "sending"}
+              className="rounded-full bg-foreground px-7 py-3 text-sm font-medium text-background transition-colors hover:bg-gold disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Check availability
+              {submitState.status === "sending"
+                ? "Checking…"
+                : "Check availability"}
             </button>
           </div>
           {errors.length > 0 ? (
@@ -104,6 +166,16 @@ export function BookingForm({ config }: { config: SiteConfig }) {
                 <li key={e}>{e}</li>
               ))}
             </ul>
+          ) : null}
+          {submitState.status === "received" ? (
+            <p className="sm:col-span-2 lg:col-span-4 rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm text-foreground">
+              {submitState.message}
+            </p>
+          ) : null}
+          {submitState.status === "error" ? (
+            <p className="sm:col-span-2 lg:col-span-4 rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm text-[#e07d5c]">
+              {submitState.message}
+            </p>
           ) : null}
         </form>
       </div>

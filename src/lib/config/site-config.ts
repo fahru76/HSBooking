@@ -33,6 +33,8 @@ export interface SiteConfig {
   tagline?: string;
   description?: string;
   owner: {
+    /** Owner account id (Supabase auth uid in production; demo seed in dev). */
+    id?: string;
     name: string;
     phone?: string;
     email?: string;
