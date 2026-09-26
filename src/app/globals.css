@@ -15,9 +15,27 @@
   --accent-strong: #8fa07c;
   --gold: #c9a96a;              /* muted gold */
   --line: rgba(244, 241, 234, 0.14);
-  --shadow-soft: 0 18px 60px -18px rgba(0, 0, 0, 0.50);
+  --shadow-soft: 0 18px 60px rgba(0, 0, 0, 0.18);
   --shadow-hard: 0 8px 28px -10px rgba(0, 0, 0, 0.70);
   --radius: 1.25rem;
+}
+
+/* Shared owner-studio controls. */
+.control {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 0.625rem;
+  background: var(--surface-2);
+  color: var(--foreground);
+  padding: 0.625rem 0.75rem;
+  font: inherit;
+  font-size: 0.875rem;
+  outline: none;
+}
+
+.control:focus-visible {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(201, 169, 106, 0.2);
 }
 
 @theme inline {

@@ -2,8 +2,7 @@
  * Server-side Supabase admin client.
  *
  * Uses the SERVICE_ROLE key — server-only, never bundled into the browser.
- * The route handler uses this to call `create_booking` (the security-definer
- * RPC that re-checks availability atomically before inserting a pending row).
+ * The route handler uses the guarded booking RPC and owner-config API.
  *
  * Environment variables:
  *   NEXT_PUBLIC_SUPABASE_URL  — the Supabase API URL (safe for browser too)

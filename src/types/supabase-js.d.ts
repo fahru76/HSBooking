@@ -17,6 +17,7 @@ declare module "@supabase/supabase-js" {
       signUp: (creds: { email: string; password: string }) => Promise<{ data: unknown; error: { message: string } | null }>;
       signOut: () => Promise<void>;
       getSession: () => Promise<{ data: { session: unknown } | null }>;
+      getUser: (jwt?: string) => Promise<{ data: { user: { id: string } | null }; error: { message: string } | null }>;
     };
     from: (table: string) => {
       select: (columns?: string) => { eq: (col: string, val: unknown) => { maybeSingle: () => Promise<{ data: unknown; error: { message: string } | null }> } };
