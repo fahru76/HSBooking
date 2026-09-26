@@ -7,14 +7,19 @@ import type { SiteConfig } from "@/lib/config/site-config";
 
 export function SiteHeader({ config }: { config: SiteConfig }) {
   return (
-    <header className="border-b border-zinc-200 bg-white">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-5">
-        <p className="text-xl font-semibold text-zinc-900">{config.siteName}</p>
-        <nav className="flex gap-6 text-sm text-zinc-600">
-          <a href="#rooms" className="hover:text-zinc-900">Rooms</a>
-          <a href="#amenities" className="hover:text-zinc-900">Amenities</a>
-          <a href="#policies" className="hover:text-zinc-900">Policies</a>
-          <a href="#book" className="hover:text-zinc-900">Book</a>
+    <header className="border-b border-line bg-background/80 backdrop-blur-md sticky top-0 z-40">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-5 py-4">
+        <p className="font-display text-xl font-medium text-foreground">{config.siteName}</p>
+        <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted">
+          <a href="#rooms" className="transition-colors hover:text-foreground">Rooms</a>
+          <a href="#amenities" className="transition-colors hover:text-foreground">Amenities</a>
+          <a href="#policies" className="transition-colors hover:text-foreground">Policies</a>
+          <a
+            href="#book"
+            className="rounded-full border border-line px-4 py-1.5 text-foreground transition-colors hover:border-gold hover:text-gold"
+          >
+            Book
+          </a>
         </nav>
       </div>
     </header>

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3f5f4a"/>
+      <stop offset="0.85" stop-color="#0f1f16"/>
+    </linearGradient>
+    <linearGradient id="haze" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2c4430" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0c1410" stop-opacity="0.85"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#sky)"/>
+  <!-- layered tea-plantation terraces -->
+  <path d="M0 620 C 260 540, 520 560, 760 600 C 1000 640, 1300 590, 1600 650 L1600 900 L0 900 Z" fill="#18291e"/>
+  <path d="M0 700 C 300 630, 640 660, 900 700 C 1180 740, 1420 690, 1600 740 L1600 900 L0 900 Z" fill="#0f1d14"/>
+  <path d="M0 780 C 340 730, 680 760, 980 790 C 1260 820, 1440 780, 1600 810 L1600 900 L0 900 Z" fill="#0a1510"/>
+  <rect width="1600" height="900" fill="url(#haze)"/>
+  <!-- soft mist bands -->
+  <ellipse cx="420" cy="470" rx="380" ry="26" fill="#ffffff" opacity="0.10"/>
+  <ellipse cx="1150" cy="540" rx="420" ry="30" fill="#ffffff" opacity="0.08"/>
+</svg>
