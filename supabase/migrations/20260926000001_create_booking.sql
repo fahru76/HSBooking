@@ -55,10 +55,12 @@ begin
 end;
 $$;
 
--- Only the server (service-role) should call this; revoke from public/anon/authenticated.
+-- Only the server (service-role) should call this. Never expose a booking
+-- creation primitive to anon/authenticated clients; the public route is the
+-- validation boundary and the service-role key remains server-only.
 revoke all on function public.create_booking(
   uuid, text, date, date, integer, text, text, text
 ) from public, anon, authenticated;
 grant execute on function public.create_booking(
   uuid, text, date, date, integer, text, text, text
-) to authenticated, anon;
+) to service_role;
