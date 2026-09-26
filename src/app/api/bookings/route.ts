@@ -25,6 +25,12 @@ interface BookingRequest {
   guestPhone?: string;
 }
 
+function isIsoDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
 export async function POST(request: Request) {
   let body: BookingRequest;
   try {
@@ -41,7 +47,14 @@ export async function POST(request: Request) {
     typeof body.checkIn !== "string" ||
     typeof body.checkOut !== "string" ||
     typeof body.guests !== "number" ||
-    typeof body.guestName !== "string"
+    !Number.isInteger(body.guests) ||
+    body.guests < 1 ||
+    typeof body.guestName !== "string" ||
+    !body.ownerId.trim() ||
+    !body.roomId.trim() ||
+    !body.guestName.trim() ||
+    !isIsoDate(body.checkIn) ||
+    !isIsoDate(body.checkOut)
   ) {
     return NextResponse.json({ error: "invalid-payload" }, { status: 400 });
   }
